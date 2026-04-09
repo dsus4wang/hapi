@@ -121,7 +121,7 @@ export function HappyComposer(props: {
         const path = (attachment as { path?: string }).path
         return typeof path === 'string' && path.length > 0
     })
-    const canSend = (hasText || hasAttachments) && attachmentsReady && !controlsDisabled && !threadIsRunning
+    const canSend = (hasText || hasAttachments) && attachmentsReady && !controlsDisabled
 
     const [inputState, setInputState] = useState<TextInputState>({
         text: '',
@@ -286,12 +286,18 @@ export function HappyComposer(props: {
             return
         }
 
-        // Shift+Enter sends the message (works on all platforms including iPadOS with keyboard)
+        // Shift+Enter inserts a newline (standard behavior)
         if (key === 'Enter' && e.shiftKey) {
+            return // let default textarea behavior handle newline
+        }
+
+        // Enter without shift: send or no-op (never insert newline)
+        if (key === 'Enter' && !e.shiftKey && suggestions.length === 0) {
             e.preventDefault()
-            if (!canSend) return
-            api.composer().send()
-            setShowContinueHint(false)
+            if (canSend) {
+                api.composer().send()
+                setShowContinueHint(false)
+            }
             return
         }
 
