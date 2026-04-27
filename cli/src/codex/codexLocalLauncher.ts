@@ -70,6 +70,7 @@ export async function codexLocalLauncher(session: CodexSession): Promise<'switch
         }
         const createdScanner = await createCodexSessionScanner({
             transcriptPath,
+            replayExistingEvents: session.importHistory,
             onSessionId: (sessionId) => {
                 session.onSessionFound(sessionId);
             },
