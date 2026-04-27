@@ -70,6 +70,7 @@ export async function codexLocalLauncher(session: CodexSession): Promise<'switch
         }
         const createdScanner = await createCodexSessionScanner({
             transcriptPath,
+            replayExistingEvents: session.importHistory,
             onSessionId: (sessionId) => {
                 session.onSessionFound(sessionId);
             },
@@ -82,6 +83,9 @@ export async function codexLocalLauncher(session: CodexSession): Promise<'switch
                     session.sendUserMessage(converted.userMessage);
                 }
                 if (converted?.message) {
+                    if (converted.message.type === 'token_count') {
+                        session.recordCodexUsage(converted.message);
+                    }
                     session.sendAgentMessage(converted.message);
                 }
             }
