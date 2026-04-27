@@ -125,6 +125,7 @@ export class CodexSession extends AgentSessionBase<EnhancedMode> {
 
     setCollaborationMode = (mode: EnhancedMode['collaborationMode']): void => {
         this.collaborationMode = mode;
+        this.client.keepAlive(this.thinking, this.mode, this.getKeepAliveRuntime());
     };
 
     recordLocalLaunchFailure = (message: string, exitReason: LocalLaunchExitReason): void => {
