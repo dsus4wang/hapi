@@ -123,6 +123,14 @@ function extractReasoningText(item: Record<string, unknown>): string | null {
     return null;
 }
 
+function buildCompactEvent(type: 'compact-started' | 'compact', value: Record<string, unknown>): ConvertedEvent {
+    return {
+        type,
+        trigger: asString(value.trigger ?? value.reason) ?? 'auto',
+        preTokens: asNumber(value.preTokens ?? value.pre_tokens ?? value.tokensBefore ?? value.tokens_before) ?? 0
+    };
+}
+
 export class AppServerEventConverter {
     private readonly agentMessageBuffers = new Map<string, string>();
     private readonly reasoningBuffers = new Map<string, string>();
@@ -235,11 +243,27 @@ export class AppServerEventConverter {
             msgType === 'skills_update_available' ||
             msgType === 'stream_error' ||
             msgType === 'warning' ||
-            msgType === 'context_compacted' ||
             msgType === 'terminal_interaction' ||
             msgType === 'user_message'
         ) {
             return [];
+        }
+
+        if (
+            msgType === 'context_compaction_started' ||
+            msgType === 'context_compacting' ||
+            msgType === 'compact_started' ||
+            msgType === 'compaction_started'
+        ) {
+            return [buildCompactEvent('compact-started', msg)];
+        }
+
+        if (
+            msgType === 'context_compacted' ||
+            msgType === 'compact_completed' ||
+            msgType === 'compaction_completed'
+        ) {
+            return [buildCompactEvent('compact', msg)];
         }
 
         return [msg as ConvertedEvent];
@@ -253,7 +277,21 @@ export class AppServerEventConverter {
             return this.handleWrappedCodexEvent(paramsRecord) ?? events;
         }
 
-        if (method === 'account/rateLimits/updated' || method === 'turn/plan/updated' || method === 'thread/compacted') {
+        if (method === 'account/rateLimits/updated' || method === 'turn/plan/updated') {
+            return events;
+        }
+
+        if (
+            method === 'thread/compact/started' ||
+            method === 'thread/compaction/started' ||
+            method === 'thread/compacting'
+        ) {
+            events.push(buildCompactEvent('compact-started', paramsRecord));
+            return events;
+        }
+
+        if (method === 'thread/compacted' || method === 'thread/compact/completed' || method === 'thread/compaction/completed') {
+            events.push(buildCompactEvent('compact', paramsRecord));
             return events;
         }
 

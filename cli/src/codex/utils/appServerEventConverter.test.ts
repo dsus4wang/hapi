@@ -151,6 +151,22 @@ describe('AppServerEventConverter', () => {
         expect(events).toEqual([{ type: 'turn_diff', unified_diff: 'diff --git a b' }]);
     });
 
+    it('maps direct context compaction lifecycle notifications', () => {
+        const converter = new AppServerEventConverter();
+
+        const started = converter.handleNotification('thread/compact/started', {
+            trigger: 'auto',
+            preTokens: 123456
+        });
+        const completed = converter.handleNotification('thread/compacted', {
+            trigger: 'auto',
+            preTokens: 123456
+        });
+
+        expect(started).toEqual([{ type: 'compact-started', trigger: 'auto', preTokens: 123456 }]);
+        expect(completed).toEqual([{ type: 'compact', trigger: 'auto', preTokens: 123456 }]);
+    });
+
     it('unwraps codex/event task lifecycle', () => {
         const converter = new AppServerEventConverter();
 
@@ -254,6 +270,20 @@ describe('AppServerEventConverter', () => {
         });
 
         expect(wrapped).toEqual([]);
+    });
+
+    it('maps wrapped context compaction lifecycle events', () => {
+        const converter = new AppServerEventConverter();
+
+        const started = converter.handleNotification('codex/event/context_compaction_started', {
+            msg: { type: 'context_compaction_started', trigger: 'manual', pre_tokens: 5000 }
+        });
+        const completed = converter.handleNotification('codex/event/context_compacted', {
+            msg: { type: 'context_compacted', trigger: 'manual', pre_tokens: 5000 }
+        });
+
+        expect(started).toEqual([{ type: 'compact-started', trigger: 'manual', preTokens: 5000 }]);
+        expect(completed).toEqual([{ type: 'compact', trigger: 'manual', preTokens: 5000 }]);
     });
 
     it('ignores wrapped retryable errors', () => {

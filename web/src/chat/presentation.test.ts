@@ -75,6 +75,30 @@ describe('getEventPresentation — limit-reached', () => {
     })
 })
 
+describe('getEventPresentation — compaction', () => {
+    it('shows context compaction start', () => {
+        const result = getEventPresentation({
+            type: 'compact-started',
+            trigger: 'auto',
+            preTokens: 123456,
+        })
+
+        expect(result.icon).toBe('📦')
+        expect(result.text).toBe('Compacting context...')
+    })
+
+    it('shows context compaction completion', () => {
+        const result = getEventPresentation({
+            type: 'compact',
+            trigger: 'auto',
+            preTokens: 123456,
+        })
+
+        expect(result.icon).toBe('📦')
+        expect(result.text).toBe('Conversation compacted')
+    })
+})
+
 describe('formatResetTime', () => {
     it('formats a unix timestamp to a non-empty string', () => {
         const result = formatResetTime(1774278000)

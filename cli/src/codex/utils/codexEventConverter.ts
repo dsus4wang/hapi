@@ -38,9 +38,20 @@ export type CodexMessage = {
     id: string;
 };
 
+export type CodexAgentEvent = {
+    type: 'compact-started';
+    trigger: string;
+    preTokens: number;
+} | {
+    type: 'compact';
+    trigger: string;
+    preTokens: number;
+};
+
 export type CodexConversionResult = {
     sessionId?: string;
     message?: CodexMessage;
+    event?: CodexAgentEvent;
     userMessage?: string;
 };
 
@@ -89,6 +100,18 @@ function extractCallId(payload: Record<string, unknown>): string | null {
     }
 
     return null;
+}
+
+function asNumber(value: unknown): number | null {
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function buildCompactEvent(type: CodexAgentEvent['type'], payload: Record<string, unknown>): CodexAgentEvent {
+    return {
+        type,
+        trigger: asString(payload.trigger ?? payload.reason) ?? 'auto',
+        preTokens: asNumber(payload.preTokens ?? payload.pre_tokens ?? payload.tokensBefore ?? payload.tokens_before) ?? 0
+    };
 }
 
 export function convertCodexEvent(rawEvent: unknown): CodexConversionResult | null {
@@ -169,6 +192,23 @@ export function convertCodexEvent(rawEvent: unknown): CodexConversionResult | nu
                     delta
                 }
             };
+        }
+
+        if (
+            eventType === 'context_compaction_started' ||
+            eventType === 'context_compacting' ||
+            eventType === 'compact_started' ||
+            eventType === 'compaction_started'
+        ) {
+            return { event: buildCompactEvent('compact-started', payloadRecord) };
+        }
+
+        if (
+            eventType === 'context_compacted' ||
+            eventType === 'compact_completed' ||
+            eventType === 'compaction_completed'
+        ) {
+            return { event: buildCompactEvent('compact', payloadRecord) };
         }
 
         if (eventType === 'token_count') {

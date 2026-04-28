@@ -114,6 +114,10 @@ export async function importCodexSessionHistory(args: {
             args.session.sendAgentMessage(converted.message);
             imported += 1;
         }
+        if (converted?.event) {
+            args.session.sendSessionEvent(converted.event);
+            imported += 1;
+        }
     }
 
     if (title) {

@@ -97,6 +97,9 @@ export function getEventPresentation(event: AgentEvent): EventPresentation {
         const ms = typeof event.durationMs === 'number' ? event.durationMs : 0
         return { icon: '⏱️', text: `Turn: ${formatDuration(ms)}` }
     }
+    if (event.type === 'compact-started') {
+        return { icon: '📦', text: 'Compacting context...' }
+    }
     if (event.type === 'microcompact') {
         const saved = typeof event.tokensSaved === 'number' ? event.tokensSaved : 0
         const formatted = saved >= 1000 ? `${Math.round(saved / 1000)}K` : String(saved)

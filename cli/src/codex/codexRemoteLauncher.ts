@@ -32,6 +32,10 @@ function asString(value: unknown): string | null {
     return typeof value === 'string' && value.length > 0 ? value : null;
 }
 
+function asNumber(value: unknown): number | null {
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
 function isExitPlanModeTool(toolName: string): boolean {
     return toolName === 'exit_plan_mode' || toolName === 'ExitPlanMode';
 }
@@ -209,7 +213,7 @@ class CodexRemoteLauncher extends RemoteLauncherBase {
     }
 
     private async findTranscriptWithRetry(threadId: string): Promise<string | null> {
-        const attempts = 6;
+        const attempts = 30;
         for (let attempt = 0; attempt < attempts; attempt += 1) {
             if (this.shuttingDown || this.usageScannerThreadId !== threadId) {
                 return null;
@@ -224,7 +228,7 @@ class CodexRemoteLauncher extends RemoteLauncherBase {
                 return null;
             }
             if (attempt < attempts - 1) {
-                await this.sleep(250);
+                await this.sleep(500);
             }
         }
         return null;
@@ -501,6 +505,16 @@ class CodexRemoteLauncher extends RemoteLauncherBase {
                 const message = error ? `Task failed: ${error}` : 'Task failed';
                 messageBuffer.addMessage(message, 'status');
                 session.sendSessionEvent({ type: 'message', message });
+            } else if (msgType === 'compact-started') {
+                const trigger = asString(msg.trigger) ?? 'auto';
+                const preTokens = asNumber(msg.preTokens ?? msg.pre_tokens) ?? 0;
+                messageBuffer.addMessage('Compacting context...', 'status');
+                session.sendSessionEvent({ type: 'compact-started', trigger, preTokens });
+            } else if (msgType === 'compact') {
+                const trigger = asString(msg.trigger) ?? 'auto';
+                const preTokens = asNumber(msg.preTokens ?? msg.pre_tokens) ?? 0;
+                messageBuffer.addMessage('Conversation compacted', 'status');
+                session.sendSessionEvent({ type: 'compact', trigger, preTokens });
             }
 
             if (msgType === 'task_started') {

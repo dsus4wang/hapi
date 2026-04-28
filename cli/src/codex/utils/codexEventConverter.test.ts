@@ -56,6 +56,20 @@ describe('convertCodexEvent', () => {
         });
     });
 
+    it('converts context compaction lifecycle events', () => {
+        const started = convertCodexEvent({
+            type: 'event_msg',
+            payload: { type: 'context_compaction_started', trigger: 'auto', pre_tokens: 12000 }
+        });
+        const completed = convertCodexEvent({
+            type: 'event_msg',
+            payload: { type: 'context_compacted', trigger: 'auto', pre_tokens: 12000 }
+        });
+
+        expect(started?.event).toEqual({ type: 'compact-started', trigger: 'auto', preTokens: 12000 });
+        expect(completed?.event).toEqual({ type: 'compact', trigger: 'auto', preTokens: 12000 });
+    });
+
     it('converts function_call items', () => {
         const result = convertCodexEvent({
             type: 'response_item',

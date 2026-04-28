@@ -459,6 +459,14 @@ export class ApiSessionClient extends EventEmitter {
         mode: SessionPermissionMode
     } | {
         type: 'ready'
+    } | {
+        type: 'compact-started'
+        trigger: string
+        preTokens: number
+    } | {
+        type: 'compact'
+        trigger: string
+        preTokens: number
     }, id?: string): void {
         const content = {
             role: 'agent',
