@@ -6,7 +6,7 @@ import {
     buildSessionStartHookConfigArgs
 } from './utils/codexMcpConfig';
 import { codexSystemPrompt } from './utils/systemPrompt';
-import type { ReasoningEffort } from './appServerTypes';
+import type { ReasoningEffort, ServiceTier } from './appServerTypes';
 
 /**
  * Filter out 'resume' subcommand which is managed internally by hapi.
@@ -33,6 +33,7 @@ export async function codexLocal(opts: {
     path: string;
     model?: string;
     modelReasoningEffort?: ReasoningEffort;
+    serviceTier?: ServiceTier;
     sandbox?: 'read-only' | 'workspace-write' | 'danger-full-access';
     onSessionFound: (id: string) => void;
     codexArgs?: string[];
@@ -55,6 +56,10 @@ export async function codexLocal(opts: {
 
     if (opts.modelReasoningEffort) {
         args.push('--model-reasoning-effort', opts.modelReasoningEffort);
+    }
+
+    if (opts.serviceTier) {
+        args.push('-c', `service_tier="${opts.serviceTier}"`);
     }
 
     if (opts.sandbox) {

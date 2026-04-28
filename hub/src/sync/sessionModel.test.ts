@@ -72,6 +72,26 @@ describe('session model', () => {
         expect(store.sessions.getSession(session.id)?.modelReasoningEffort).toBe('xhigh')
     })
 
+    it('persists explicit service tier on Codex sessions', () => {
+        const store = new Store(':memory:')
+        const events: SyncEvent[] = []
+        const cache = new SessionCache(store, createPublisher(events))
+
+        const session = cache.getOrCreateSession(
+            'session-service-tier',
+            { path: '/tmp/project', host: 'localhost', flavor: 'codex' },
+            null,
+            'default',
+            'gpt-5.4',
+            undefined,
+            undefined,
+            'fast'
+        )
+
+        expect(session.serviceTier).toBe('fast')
+        expect(store.sessions.getSession(session.id)?.serviceTier).toBe('fast')
+    })
+
     it('preserves model from old session when merging into resumed session', async () => {
         const store = new Store(':memory:')
         const events: SyncEvent[] = []
@@ -188,6 +208,31 @@ describe('session model', () => {
         cache.applySessionConfig(session.id, { modelReasoningEffort: null })
         expect(cache.getSession(session.id)?.modelReasoningEffort).toBeNull()
         expect(store.sessions.getSession(session.id)?.modelReasoningEffort).toBeNull()
+    })
+
+    it('persists applied session service tier updates, including clear-to-default', () => {
+        const store = new Store(':memory:')
+        const events: SyncEvent[] = []
+        const cache = new SessionCache(store, createPublisher(events))
+
+        const session = cache.getOrCreateSession(
+            'session-service-tier-config',
+            { path: '/tmp/project', host: 'localhost', flavor: 'codex' },
+            null,
+            'default',
+            'gpt-5.4',
+            undefined,
+            undefined,
+            'fast'
+        )
+
+        cache.applySessionConfig(session.id, { serviceTier: 'flex' })
+        expect(cache.getSession(session.id)?.serviceTier).toBe('flex')
+        expect(store.sessions.getSession(session.id)?.serviceTier).toBe('flex')
+
+        cache.applySessionConfig(session.id, { serviceTier: null })
+        expect(cache.getSession(session.id)?.serviceTier).toBeNull()
+        expect(store.sessions.getSession(session.id)?.serviceTier).toBeNull()
     })
 
     it('persists keepalive effort changes, including clearing the effort', () => {

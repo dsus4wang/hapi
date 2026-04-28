@@ -105,6 +105,7 @@ export function SessionChat(props: {
         setCollaborationMode,
         setModel,
         setModelReasoningEffort,
+        setServiceTier,
         setEffort
     } = useSessionActions(
         props.api,
@@ -311,6 +312,17 @@ export function SessionChat(props: {
         }
     }, [setModelReasoningEffort, props.onRefresh, haptic])
 
+    const handleServiceTierChange = useCallback(async (serviceTier: 'fast' | 'flex' | null) => {
+        try {
+            await setServiceTier(serviceTier)
+            haptic.notification('success')
+            props.onRefresh()
+        } catch (e) {
+            haptic.notification('error')
+            console.error('Failed to set service tier:', e)
+        }
+    }, [setServiceTier, props.onRefresh, haptic])
+
     const handleEffortChange = useCallback(async (effort: string | null) => {
         try {
             await setEffort(effort)
@@ -454,6 +466,7 @@ export function SessionChat(props: {
                         collaborationMode={codexCollaborationModeSupported ? props.session.collaborationMode : undefined}
                         model={props.session.model}
                         modelReasoningEffort={agentFlavor === 'codex' ? props.session.modelReasoningEffort : undefined}
+                        serviceTier={agentFlavor === 'codex' ? props.session.serviceTier : undefined}
                         effort={props.session.effort}
                         agentFlavor={agentFlavor}
                         availableModelOptions={agentFlavor === 'codex' ? codexModelOptions : undefined}
@@ -479,6 +492,11 @@ export function SessionChat(props: {
                         onModelReasoningEffortChange={
                             agentFlavor === 'codex' && props.session.active && !controlledByUser
                                 ? handleModelReasoningEffortChange
+                                : undefined
+                        }
+                        onServiceTierChange={
+                            agentFlavor === 'codex' && props.session.active && !controlledByUser
+                                ? handleServiceTierChange
                                 : undefined
                         }
                         onEffortChange={handleEffortChange}

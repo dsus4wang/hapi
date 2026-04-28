@@ -55,6 +55,7 @@ export interface CollaborationModeListResponse {
 export interface ThreadStartParams {
     model?: string;
     modelProvider?: string;
+    serviceTier?: ServiceTier | null;
     cwd?: string;
     approvalPolicy?: ApprovalPolicy;
     sandbox?: SandboxMode;
@@ -82,6 +83,7 @@ export interface ThreadResumeParams {
     path?: string;
     model?: string;
     modelProvider?: string;
+    serviceTier?: ServiceTier | null;
     cwd?: string;
     approvalPolicy?: ApprovalPolicy;
     sandbox?: SandboxMode;
@@ -135,6 +137,7 @@ export type SandboxPolicy =
     };
 
 export type ReasoningEffort = 'none' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
+export type ServiceTier = 'fast' | 'flex';
 export type ReasoningSummary = 'auto' | 'none' | 'brief' | 'detailed';
 
 export type CollaborationMode = {
@@ -153,6 +156,7 @@ export interface TurnStartParams {
     approvalPolicy?: ApprovalPolicy;
     sandboxPolicy?: SandboxPolicy;
     model?: string;
+    serviceTier?: ServiceTier | null;
     effort?: ReasoningEffort;
     summary?: ReasoningSummary;
     personality?: string;

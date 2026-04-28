@@ -59,6 +59,25 @@ function shouldRetryWithoutCollaborationMode(error: unknown): boolean {
         || message.includes('mode');
 }
 
+function shouldRetryWithoutServiceTier(error: unknown): boolean {
+    const message = errorMessage(error).toLowerCase();
+    if (!message.includes('servicetier') && !message.includes('service_tier') && !message.includes('service tier')) {
+        return false;
+    }
+    return message.includes('unsupported')
+        || message.includes('unknown')
+        || message.includes('unexpected')
+        || message.includes('unrecognized')
+        || message.includes('invalid')
+        || message.includes('field');
+}
+
+function withoutServiceTier<T extends { serviceTier?: unknown }>(params: T): T {
+    const next = { ...params };
+    delete next.serviceTier;
+    return next;
+}
+
 function responseContainsPlanCollaborationMode(response: unknown): boolean {
     const record = response && typeof response === 'object' ? response as Record<string, unknown> : null;
     const candidates = [
@@ -770,6 +789,7 @@ class CodexRemoteLauncher extends RemoteLauncherBase {
             }
         });
         let supportsTurnCollaborationMode = true;
+        let supportsServiceTier = true;
         try {
             const response = await appServerClient.listCollaborationModes();
             const hasPlanMode = responseContainsPlanCollaborationMode(response);
@@ -838,6 +858,7 @@ class CodexRemoteLauncher extends RemoteLauncherBase {
                         mcpServers,
                         cliOverrides: session.codexCliOverrides
                     });
+                    const effectiveThreadParams = supportsServiceTier ? threadParams : withoutServiceTier(threadParams);
 
                     const resumeCandidate = session.sessionId && session.sessionId !== invalidThreadId
                         ? session.sessionId
@@ -848,9 +869,21 @@ class CodexRemoteLauncher extends RemoteLauncherBase {
                         try {
                             const resumeResponse = await appServerClient.resumeThread({
                                 threadId: resumeCandidate,
-                                ...threadParams
+                                ...effectiveThreadParams
                             }, {
                                 signal: this.abortController.signal
+                            }).catch(async (error) => {
+                                if (supportsServiceTier && threadParams.serviceTier && shouldRetryWithoutServiceTier(error)) {
+                                    supportsServiceTier = false;
+                                    logger.debug('[Codex] serviceTier is not supported by this Codex runtime; retrying resume without it');
+                                    return await appServerClient.resumeThread({
+                                        threadId: resumeCandidate,
+                                        ...withoutServiceTier(threadParams)
+                                    }, {
+                                        signal: this.abortController.signal
+                                    });
+                                }
+                                throw error;
                             });
                             const resumeRecord = asRecord(resumeResponse);
                             const resumeThread = resumeRecord ? asRecord(resumeRecord.thread) : null;
@@ -863,8 +896,20 @@ class CodexRemoteLauncher extends RemoteLauncherBase {
                     }
 
                     if (!threadId) {
-                        const threadResponse = await appServerClient.startThread(threadParams, {
+                        const threadResponse = await appServerClient.startThread(
+                            supportsServiceTier ? threadParams : withoutServiceTier(threadParams),
+                            {
                             signal: this.abortController.signal
+                            }
+                        ).catch(async (error) => {
+                            if (supportsServiceTier && threadParams.serviceTier && shouldRetryWithoutServiceTier(error)) {
+                                supportsServiceTier = false;
+                                logger.debug('[Codex] serviceTier is not supported by this Codex runtime; retrying thread start without it');
+                                return await appServerClient.startThread(withoutServiceTier(threadParams), {
+                                    signal: this.abortController.signal
+                                });
+                            }
+                            throw error;
                         });
                         const threadRecord = asRecord(threadResponse);
                         const thread = threadRecord ? asRecord(threadRecord.thread) : null;
@@ -897,7 +942,8 @@ class CodexRemoteLauncher extends RemoteLauncherBase {
                 turnInFlight = true;
                 allowAnonymousTerminalEvent = false;
 
-                const buildParams = (suppressCollaborationMode: boolean) => buildTurnStartParams({
+                const buildParams = (suppressCollaborationMode: boolean) => {
+                    const params = buildTurnStartParams({
                     threadId: this.currentThreadId!,
                     message: message.message,
                     cwd: session.path,
@@ -909,7 +955,9 @@ class CodexRemoteLauncher extends RemoteLauncherBase {
                     overrides: suppressCollaborationMode
                         ? { suppressCollaborationMode: true }
                         : undefined
-                });
+                    });
+                    return supportsServiceTier ? params : withoutServiceTier(params);
+                };
 
                 let turnResponse: unknown;
                 const shouldSendCollaborationMode = supportsTurnCollaborationMode && Boolean(message.mode.collaborationMode);
@@ -928,6 +976,12 @@ class CodexRemoteLauncher extends RemoteLauncherBase {
                             logger.debug('[Codex] collaborationMode is not supported by this Codex runtime; retrying without it');
                         }
                         turnResponse = await appServerClient.startTurn(buildParams(true), {
+                            signal: this.abortController.signal
+                        });
+                    } else if (supportsServiceTier && shouldRetryWithoutServiceTier(error)) {
+                        supportsServiceTier = false;
+                        logger.debug('[Codex] serviceTier is not supported by this Codex runtime; retrying turn without it');
+                        turnResponse = await appServerClient.startTurn(buildParams(!shouldSendCollaborationMode), {
                             signal: this.abortController.signal
                         });
                     } else {

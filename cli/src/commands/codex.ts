@@ -5,7 +5,7 @@ import { maybeAutoStartServer } from '@/utils/autoStartServer'
 import type { CommandDefinition } from './types'
 import { CODEX_PERMISSION_MODES } from '@hapi/protocol/modes'
 import type { CodexPermissionMode } from '@hapi/protocol/types'
-import type { ReasoningEffort } from '@/codex/appServerTypes'
+import type { ReasoningEffort, ServiceTier } from '@/codex/appServerTypes'
 import { assertCodexLocalSupported } from '@/codex/utils/codexVersion'
 
 function parseReasoningEffort(value: string): ReasoningEffort {
@@ -19,6 +19,16 @@ function parseReasoningEffort(value: string): ReasoningEffort {
             return value
         default:
             throw new Error('Invalid --model-reasoning-effort value')
+    }
+}
+
+function parseServiceTier(value: string): ServiceTier {
+    switch (value) {
+        case 'fast':
+        case 'flex':
+            return value
+        default:
+            throw new Error('Invalid --service-tier value')
     }
 }
 
@@ -37,6 +47,7 @@ export const codexCommand: CommandDefinition = {
                 importHistory?: boolean
                 model?: string
                 modelReasoningEffort?: ReasoningEffort
+                serviceTier?: ServiceTier
             } = {}
             const unknownArgs: string[] = []
             let hasExplicitPermissionMode = false
@@ -77,6 +88,12 @@ export const codexCommand: CommandDefinition = {
                         throw new Error('Missing --model-reasoning-effort value')
                     }
                     options.modelReasoningEffort = parseReasoningEffort(effort)
+                } else if (arg === '--service-tier') {
+                    const serviceTier = commandArgs[++i]
+                    if (!serviceTier) {
+                        throw new Error('Missing --service-tier value')
+                    }
+                    options.serviceTier = parseServiceTier(serviceTier)
                 } else if (arg === '--hapi-import-history') {
                     options.importHistory = true
                 } else {

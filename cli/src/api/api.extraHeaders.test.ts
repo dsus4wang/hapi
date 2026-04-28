@@ -136,6 +136,7 @@ describe('API extra headers integration', () => {
             todos: [],
             model: null,
             modelReasoningEffort: null,
+            serviceTier: null,
             effort: null,
             permissionMode: undefined,
             collaborationMode: undefined

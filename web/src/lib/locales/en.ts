@@ -308,6 +308,7 @@ export default {
   'misc.permissionMode': 'Permission Mode',
   'misc.model': 'Model',
   'misc.reasoningEffort': 'Reasoning Effort',
+  'misc.serviceTier': 'Service Tier',
   'misc.effort': 'Effort',
   'misc.loading': 'Loading…',
   'misc.loadOlder': 'Load older',

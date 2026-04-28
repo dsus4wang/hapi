@@ -490,6 +490,7 @@ export class ApiSessionClient extends EventEmitter {
             permissionMode?: SessionPermissionMode
             model?: SessionModel
             modelReasoningEffort?: string | null
+            serviceTier?: 'fast' | 'flex' | null
             effort?: string | null
             collaborationMode?: SessionCollaborationMode
         }

@@ -97,6 +97,16 @@ describe('appServerConfig', () => {
         });
     });
 
+    it('passes service tier via thread params', () => {
+        const params = buildThreadStartParams({
+            cwd: '/workspace/project',
+            mode: { permissionMode: 'default', serviceTier: 'fast', collaborationMode: 'default' },
+            mcpServers
+        });
+
+        expect(params.serviceTier).toBe('fast');
+    });
+
     it('builds turn params with mode defaults', () => {
         const params = buildTurnStartParams({
             threadId: 'thread-1',
@@ -248,5 +258,16 @@ describe('appServerConfig', () => {
 
         expect(params.collaborationMode).toBeUndefined();
         expect(params.model).toBe('o3');
+    });
+
+    it('passes service tier via turn params', () => {
+        const params = buildTurnStartParams({
+            threadId: 'thread-1',
+            message: 'hello',
+            cwd: '/workspace/project',
+            mode: { permissionMode: 'default', model: 'o3', serviceTier: 'flex', collaborationMode: 'default' }
+        });
+
+        expect(params.serviceTier).toBe('flex');
     });
 });

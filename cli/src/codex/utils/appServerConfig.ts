@@ -1,6 +1,5 @@
 import type { EnhancedMode } from '../loop';
 import type { CodexCliOverrides } from './codexCliOverrides';
-import type { McpServersConfig } from './buildHapiMcpBridge';
 import { codexSystemPrompt } from './systemPrompt';
 import type {
     ApprovalPolicy,
@@ -10,6 +9,8 @@ import type {
     TurnStartParams
 } from '../appServerTypes';
 import { resolveCodexPermissionModeConfig } from './permissionModeConfig';
+
+type AppServerMcpServersConfig = Record<string, { command: string; args: string[] } | { url: string }>;
 
 function resolveApprovalPolicy(mode: EnhancedMode): ApprovalPolicy {
     return resolveCodexPermissionModeConfig(mode.permissionMode).approvalPolicy;
@@ -36,14 +37,16 @@ function resolveSandboxPolicyOverride(value: CodexCliOverrides['sandbox'] | unde
     }
 }
 
-function buildMcpServerConfig(mcpServers: McpServersConfig): Record<string, unknown> {
+function buildMcpServerConfig(mcpServers: AppServerMcpServersConfig): Record<string, unknown> {
     const config: Record<string, unknown> = {};
 
     for (const [name, server] of Object.entries(mcpServers)) {
-        config[`mcp_servers.${name}`] = {
-            command: server.command,
-            args: server.args
-        };
+        config[`mcp_servers.${name}`] = 'url' in server
+            ? { url: server.url }
+            : {
+                command: server.command,
+                args: server.args
+            };
     }
 
     return config;
@@ -66,7 +69,7 @@ function resolveInstructions(args: {
 export function buildThreadStartParams(args: {
     cwd: string;
     mode: EnhancedMode;
-    mcpServers: McpServersConfig;
+    mcpServers: AppServerMcpServersConfig;
     cliOverrides?: CodexCliOverrides;
     baseInstructions?: string;
     developerInstructions?: string;
@@ -100,6 +103,9 @@ export function buildThreadStartParams(args: {
 
     if (args.mode.model) {
         params.model = args.mode.model;
+    }
+    if (args.mode.serviceTier) {
+        params.serviceTier = args.mode.serviceTier;
     }
 
     return params;
@@ -146,6 +152,9 @@ export function buildTurnStartParams(args: {
         ? undefined
         : args.mode?.collaborationMode;
     const model = args.overrides?.model ?? args.mode?.model;
+    if (args.mode?.serviceTier) {
+        params.serviceTier = args.mode.serviceTier;
+    }
     if (collaborationMode) {
         if (!model) {
             throw new Error(`Collaboration mode '${collaborationMode}' requires a resolved model`);

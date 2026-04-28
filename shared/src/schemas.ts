@@ -214,6 +214,7 @@ export const SessionSchema = z.object({
     teamState: TeamStateSchema.optional(),
     model: z.string().nullable().optional().default(null),
     modelReasoningEffort: z.string().nullable().optional().default(null),
+    serviceTier: z.enum(['fast', 'flex']).nullable().optional().default(null),
     effort: z.string().nullable().optional().default(null),
     permissionMode: PermissionModeSchema.optional(),
     collaborationMode: CodexCollaborationModeSchema.optional()

@@ -18,6 +18,7 @@ type DbSessionRow = {
     agent_state_version: number
     model: string | null
     model_reasoning_effort: string | null
+    service_tier: string | null
     effort: string | null
     todos: string | null
     todos_updated_at: number | null
@@ -42,6 +43,7 @@ function toStoredSession(row: DbSessionRow): StoredSession {
         agentStateVersion: row.agent_state_version,
         model: row.model,
         modelReasoningEffort: row.model_reasoning_effort,
+        serviceTier: row.service_tier,
         effort: row.effort,
         todos: safeJsonParse(row.todos),
         todosUpdatedAt: row.todos_updated_at,
@@ -61,7 +63,8 @@ export function getOrCreateSession(
     namespace: string,
     model?: string,
     effort?: string,
-    modelReasoningEffort?: string
+    modelReasoningEffort?: string,
+    serviceTier?: string
 ): StoredSession {
     const existing = db.prepare(
         'SELECT * FROM sessions WHERE tag = ? AND namespace = ? ORDER BY created_at DESC LIMIT 1'
@@ -84,6 +87,7 @@ export function getOrCreateSession(
             agent_state, agent_state_version,
             model,
             model_reasoning_effort,
+            service_tier,
             effort,
             todos, todos_updated_at,
             active, active_at, seq
@@ -93,6 +97,7 @@ export function getOrCreateSession(
             @agent_state, 1,
             @model,
             @model_reasoning_effort,
+            @service_tier,
             @effort,
             NULL, NULL,
             0, NULL, 0
@@ -107,6 +112,7 @@ export function getOrCreateSession(
         agent_state: agentStateJson,
         model: model ?? null,
         model_reasoning_effort: modelReasoningEffort ?? null,
+        service_tier: serviceTier ?? null,
         effort: effort ?? null
     })
 
@@ -299,6 +305,39 @@ export function setSessionModelReasoningEffort(
             id,
             namespace,
             model_reasoning_effort: modelReasoningEffort,
+            updated_at: now,
+            touch_updated_at: touchUpdatedAt ? 1 : 0
+        })
+
+        return result.changes === 1
+    } catch {
+        return false
+    }
+}
+
+export function setSessionServiceTier(
+    db: Database,
+    id: string,
+    serviceTier: string | null,
+    namespace: string,
+    options?: { touchUpdatedAt?: boolean }
+): boolean {
+    const now = Date.now()
+    const touchUpdatedAt = options?.touchUpdatedAt === true
+
+    try {
+        const result = db.prepare(`
+            UPDATE sessions
+            SET service_tier = @service_tier,
+                updated_at = CASE WHEN @touch_updated_at = 1 THEN @updated_at ELSE updated_at END,
+                seq = seq + 1
+            WHERE id = @id
+              AND namespace = @namespace
+              AND service_tier IS NOT @service_tier
+        `).run({
+            id,
+            namespace,
+            service_tier: serviceTier,
             updated_at: now,
             touch_updated_at: touchUpdatedAt ? 1 : 0
         })

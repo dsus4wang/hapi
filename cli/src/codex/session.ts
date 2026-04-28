@@ -4,7 +4,7 @@ import { AgentSessionBase } from '@/agent/sessionBase';
 import type { EnhancedMode, PermissionMode } from './loop';
 import type { CodexCliOverrides } from './utils/codexCliOverrides';
 import type { LocalLaunchExitReason } from '@/agent/localLaunchPolicy';
-import type { SessionModel, SessionModelReasoningEffort } from '@/api/types';
+import type { SessionModel, SessionModelReasoningEffort, SessionServiceTier } from '@/api/types';
 import { normalizeCodexUsage } from './utils/codexUsage';
 
 type LocalLaunchFailure = {
@@ -38,6 +38,7 @@ export class CodexSession extends AgentSessionBase<EnhancedMode> {
         permissionMode?: PermissionMode;
         model?: SessionModel;
         modelReasoningEffort?: SessionModelReasoningEffort;
+        serviceTier?: SessionServiceTier;
         collaborationMode?: EnhancedMode['collaborationMode'];
         importHistory?: boolean;
     }) {
@@ -59,6 +60,7 @@ export class CodexSession extends AgentSessionBase<EnhancedMode> {
             permissionMode: opts.permissionMode,
             model: opts.model,
             modelReasoningEffort: opts.modelReasoningEffort,
+            serviceTier: opts.serviceTier,
             collaborationMode: opts.collaborationMode
         });
 
@@ -69,6 +71,7 @@ export class CodexSession extends AgentSessionBase<EnhancedMode> {
         this.permissionMode = opts.permissionMode;
         this.model = opts.model;
         this.modelReasoningEffort = opts.modelReasoningEffort;
+        this.serviceTier = opts.serviceTier;
         this.collaborationMode = opts.collaborationMode;
         this.importHistory = opts.importHistory === true;
     }
@@ -110,6 +113,10 @@ export class CodexSession extends AgentSessionBase<EnhancedMode> {
 
     setModelReasoningEffort = (modelReasoningEffort: SessionModelReasoningEffort): void => {
         this.modelReasoningEffort = modelReasoningEffort;
+    };
+
+    setServiceTier = (serviceTier: SessionServiceTier): void => {
+        this.serviceTier = serviceTier;
     };
 
     recordCodexUsage = (payload: unknown): void => {
