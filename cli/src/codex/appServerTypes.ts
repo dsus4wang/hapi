@@ -181,3 +181,11 @@ export interface TurnInterruptResponse {
     ok: boolean;
     [key: string]: unknown;
 }
+
+export interface ThreadCompactStartParams {
+    threadId: string;
+}
+
+export interface ThreadCompactStartResponse {
+    [key: string]: unknown;
+}

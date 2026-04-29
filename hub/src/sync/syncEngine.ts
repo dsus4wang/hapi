@@ -347,6 +347,15 @@ export class SyncEngine {
             collaborationMode?: CodexCollaborationMode
         }
     ): Promise<void> {
+        const session = this.sessionCache.getSession(sessionId)
+        if (!session?.active) {
+            // For inactive sessions, update the in-memory cache directly without
+            // an RPC call — the CLI is not running yet. The updated value will be
+            // passed to the spawned process when the session is resumed.
+            this.sessionCache.applySessionConfig(sessionId, config)
+            return
+        }
+
         const result = await this.rpcGateway.requestSessionConfig(sessionId, config)
         if (!result || typeof result !== 'object') {
             throw new Error('Invalid response from session config RPC')
@@ -399,7 +408,7 @@ export class SyncEngine {
         )
     }
 
-    async resumeSession(sessionId: string, namespace: string): Promise<ResumeSessionResult> {
+    async resumeSession(sessionId: string, namespace: string, opts?: { permissionMode?: PermissionMode }): Promise<ResumeSessionResult> {
         const access = this.sessionCache.resolveSessionAccess(sessionId, namespace)
         if (!access.ok) {
             return {
@@ -457,6 +466,7 @@ export class SyncEngine {
             return { type: 'error', message: 'No machine online', code: 'no_machine_online' }
         }
 
+        const effectivePermissionMode = opts?.permissionMode ?? session.permissionMode ?? undefined
         const spawnResult = await this.rpcGateway.spawnSession(
             targetMachine.id,
             metadata.path,
@@ -469,7 +479,7 @@ export class SyncEngine {
             resumeToken,
             false,
             session.effort ?? undefined,
-            session.permissionMode ?? undefined
+            effectivePermissionMode
         )
 
         if (spawnResult.type !== 'success') {

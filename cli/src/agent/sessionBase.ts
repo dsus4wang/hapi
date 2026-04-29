@@ -88,6 +88,10 @@ export class AgentSessionBase<Mode> {
         this.client.keepAlive(thinking, this.mode, this.getKeepAliveRuntime());
     };
 
+    pushKeepAlive = () => {
+        this.client.keepAlive(this.thinking, this.mode, this.getKeepAliveRuntime());
+    };
+
     onModeChange = (mode: 'local' | 'remote') => {
         this.mode = mode;
         this.client.keepAlive(this.thinking, mode, this.getKeepAliveRuntime());

@@ -45,6 +45,12 @@ export default {
   'sessions.empty.hint': 'Start a coding session in any folder under your workspace, or browse the tree first.',
   'sessions.empty.startSession': 'Start a session',
   'sessions.empty.browse': 'Browse workspace',
+  'sessions.search.placeholder': 'Search sessions…',
+  'sessions.search.clear': 'Clear search',
+  'sessions.search.count': '{n} of {total} sessions',
+  'sessions.search.noResults': 'No sessions match your search.',
+  'sessions.group.showMore': 'Show {n} more',
+  'sessions.group.showLess': 'Show less',
 
   // Session list
   'session.item.path': 'path',
@@ -167,6 +173,7 @@ export default {
 
   // Code block
   'code.copy': 'Copy',
+  'code.truncated': 'Preview truncated — open details for full output',
 
   // Diff view
   'diff.title': 'Diff',
@@ -190,6 +197,8 @@ export default {
   'tool.exitPlan': 'Exit Plan Mode',
   'tool.patch': 'Patch',
   'tool.input': 'Input',
+  'tool.trace': 'Trace',
+  'tool.trace.callsSuffix': 'calls',
   'tool.result': 'Result',
   'tool.questionsAnswers': 'Questions & Answers',
   'tool.submit': 'Submit',

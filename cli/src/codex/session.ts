@@ -4,7 +4,7 @@ import { AgentSessionBase } from '@/agent/sessionBase';
 import type { EnhancedMode, PermissionMode } from './loop';
 import type { CodexCliOverrides } from './utils/codexCliOverrides';
 import type { LocalLaunchExitReason } from '@/agent/localLaunchPolicy';
-import type { SessionModel, SessionModelReasoningEffort, SessionServiceTier } from '@/api/types';
+import type { Metadata, SessionModel, SessionModelReasoningEffort, SessionServiceTier } from '@/api/types';
 import { normalizeCodexUsage } from './utils/codexUsage';
 
 type LocalLaunchFailure = {
@@ -101,6 +101,16 @@ export class CodexSession extends AgentSessionBase<EnhancedMode> {
 
     resetTranscriptPath(): void {
         this.transcriptPath = null;
+    }
+
+    resetCodexThread(): void {
+        this.sessionId = null;
+        this.resetTranscriptPath();
+        this.client.updateMetadata((metadata: Metadata) => {
+            const updated = { ...metadata };
+            delete updated.codexSessionId;
+            return updated;
+        });
     }
 
     setPermissionMode = (mode: PermissionMode): void => {
