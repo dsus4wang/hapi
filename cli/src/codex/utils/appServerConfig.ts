@@ -148,9 +148,9 @@ export function buildTurnStartParams(args: {
         params.sandboxPolicy = sandboxPolicy;
     }
 
-    const collaborationMode = args.overrides?.suppressCollaborationMode
+    const collaborationMode = args.overrides?.suppressCollaborationMode || args.mode?.collaborationMode !== 'plan'
         ? undefined
-        : args.mode?.collaborationMode;
+        : args.mode.collaborationMode;
     const model = args.overrides?.model ?? args.mode?.model;
     if (args.mode?.serviceTier) {
         params.serviceTier = args.mode.serviceTier;
@@ -168,8 +168,13 @@ export function buildTurnStartParams(args: {
                 developer_instructions: developerInstructions
             }
         };
-    } else if (model) {
-        params.model = model;
+    } else {
+        if (model) {
+            params.model = model;
+        }
+        if (args.mode?.modelReasoningEffort) {
+            params.effort = args.mode.modelReasoningEffort;
+        }
     }
 
     return params;

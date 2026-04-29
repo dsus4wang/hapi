@@ -306,6 +306,23 @@ describe('codexRemoteLauncher', () => {
         expect(session.thinking).toBe(false);
     });
 
+    it('sends default turns without collaborationMode so app-server applies service tier overrides', async () => {
+        const { session } = createSessionStub(['fast please'], {
+            permissionMode: 'default',
+            collaborationMode: 'default',
+            model: 'gpt-5.4',
+            serviceTier: 'fast'
+        });
+
+        const exitReason = await codexRemoteLauncher(session as never);
+
+        expect(exitReason).toBe('exit');
+        expect(harness.startTurnParams).toHaveLength(1);
+        expect(harness.startTurnParams[0]?.collaborationMode).toBeUndefined();
+        expect(harness.startTurnParams[0]?.model).toBe('gpt-5.4');
+        expect(harness.startTurnParams[0]?.serviceTier).toBe('fast');
+    });
+
     it('surfaces thread-level systemError as a visible failure and emits ready', async () => {
         harness.remainingThreadSystemErrors = 1;
         const { session, sessionEvents } = createSessionStub();

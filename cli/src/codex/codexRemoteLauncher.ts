@@ -1025,7 +1025,7 @@ class CodexRemoteLauncher extends RemoteLauncherBase {
                 };
 
                 let turnResponse: unknown;
-                const shouldSendCollaborationMode = supportsTurnCollaborationMode && Boolean(message.mode.collaborationMode);
+                const shouldSendCollaborationMode = supportsTurnCollaborationMode && message.mode.collaborationMode === 'plan';
                 try {
                     turnResponse = await appServerClient.startTurn(buildParams(!shouldSendCollaborationMode), {
                         signal: this.abortController.signal

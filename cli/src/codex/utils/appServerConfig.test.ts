@@ -125,15 +125,9 @@ describe('appServerConfig', () => {
         expect(params.input).toEqual([{ type: 'text', text: 'hello' }]);
         expect(params.approvalPolicy).toBe('never');
         expect(params.sandboxPolicy).toEqual({ type: 'readOnly' });
-        expect(params.collaborationMode).toEqual({
-            mode: 'default',
-            settings: {
-                model: 'o3',
-                reasoning_effort: 'high',
-                developer_instructions: codexSystemPrompt
-            }
-        });
-        expect(params.model).toBeUndefined();
+        expect(params.collaborationMode).toBeUndefined();
+        expect(params.model).toBe('o3');
+        expect(params.effort).toBe('high');
     });
 
     it('puts collaboration mode in turn params with model settings', () => {
@@ -198,13 +192,8 @@ describe('appServerConfig', () => {
 
         expect(params.approvalPolicy).toBe('never');
         expect(params.sandboxPolicy).toEqual({ type: 'dangerFullAccess' });
-        expect(params.collaborationMode).toEqual({
-            mode: 'default',
-            settings: {
-                model: 'o3',
-                developer_instructions: codexSystemPrompt
-            }
-        });
+        expect(params.collaborationMode).toBeUndefined();
+        expect(params.model).toBe('o3');
     });
 
     it('ignores CLI overrides for turns when permission mode is not default', () => {
@@ -218,13 +207,8 @@ describe('appServerConfig', () => {
 
         expect(params.approvalPolicy).toBe('on-failure');
         expect(params.sandboxPolicy).toEqual({ type: 'workspaceWrite' });
-        expect(params.collaborationMode).toEqual({
-            mode: 'default',
-            settings: {
-                model: 'o3',
-                developer_instructions: codexSystemPrompt
-            }
-        });
+        expect(params.collaborationMode).toBeUndefined();
+        expect(params.model).toBe('o3');
     });
 
     it('prefers turn overrides', () => {
@@ -237,14 +221,8 @@ describe('appServerConfig', () => {
         });
 
         expect(params.approvalPolicy).toBe('on-request');
-        expect(params.collaborationMode).toEqual({
-            mode: 'default',
-            settings: {
-                model: 'gpt-5',
-                developer_instructions: codexSystemPrompt
-            }
-        });
-        expect(params.model).toBeUndefined();
+        expect(params.collaborationMode).toBeUndefined();
+        expect(params.model).toBe('gpt-5');
     });
 
     it('can suppress collaboration mode while preserving top-level model', () => {
